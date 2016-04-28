@@ -1,0 +1,9 @@
+.hg
+.hgignore
+*.swp
+*.pyc
+*.env
+*.orig
+venv
+staticfiles
+logs

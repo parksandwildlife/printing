@@ -1,0 +1,34 @@
+i[class*=fa-sss] {
+    padding: 0.6em 0.8em;
+    background: url('images/other_64.png') no-repeat scroll center / contain transparent;
+}
+
+i.fa-sss-2wd { background-image: url('images/2wd_64.png'); }
+i.fa-sss-4_wheel_drive_passenger { background-image: url('images/4_wheel_drive_passenger_64.png'); }
+i.fa-sss-4_wheel_drive_ute { background-image: url('images/4_wheel_drive_ute_64.png'); }
+i.fa-sss-boat { background-image: url('images/boat_64.png'); }
+i.fa-sss-comms_bus { background-image: url('images/comms_bus_64.png'); }
+i.fa-sss-dozer { background-image: url('images/dozer_64.png'); }
+i.fa-sss-fixed_wing_aircraft { background-image: url('images/fixed_wing_aircraft_64.png'); }
+i.fa-sss-float { background-image: url('images/float_64.png'); }
+i.fa-sss-gang_truck { background-image: url('images/gang_truck_64.png'); }
+i.fa-sss-grader { background-image: url('images/grader_64.png'); }
+i.fa-sss-heavy_duty { background-image: url('images/heavy_duty_64.png'); }
+i.fa-sss-light_unit { background-image: url('images/light_unit_64.png'); }
+i.fa-sss-loader { background-image: url('images/loader_64.png'); }
+i.fa-sss-person { background-image: url('images/person_64.png'); }
+i.fa-sss-rotary_aircraft { background-image: url('images/rotary_aircraft_64.png'); }
+i.fa-sss-snorkel { background-image: url('images/snorkel_64.png'); }
+i.fa-sss-tender { background-image: url('images/tender_64.png'); }
+i.fa-sss-vehicle_control_point { background-image: url('images/vehicle_control_point_64.png'); }
+i.fa-sss-closed { background-image: url('images/closed_64.png'); }
+i.fa-sss-culvert { background-image: url('images/culvert_64.png'); }
+i.fa-sss-ford { background-image: url('images/ford_64.png'); }
+i.fa-sss-heavy_duty_rated { background-image: url('images/heavy_duty_rated_64.png'); }
+i.fa-sss-light_unit_only { background-image: url('images/light_unit_only_64.png'); }
+i.fa-sss-light_unit_only_rated { background-image: url('images/light_unit_only_rated_64.png'); }
+i.fa-sss-open_rated { background-image: url('images/open_rated_64.png'); }
+i.fa-sss-removed { background-image: url('images/removed_64.png'); }
+i.fa-sss-unrated { background-image: url('images/unrated_64.png'); }
+i.fa-sss-dec_repeater_tower { background-image: url('images/dec_repeater_tower_64.png'); }
+
