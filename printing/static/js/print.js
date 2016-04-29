@@ -71,7 +71,7 @@ page.onResourceTimeout = function(request) {
 
 var run_time = 0;
 var wait_interval = 1;
-page.viewportSize = { width: 1920, height: 1200 };
+page.viewportSize = { width: 1920, height: 1357 };
 page.open(print_html,function(status){
     if (status != 'success') {
         logging.logger.error('Failed to open ' + print_html);
@@ -79,7 +79,7 @@ page.open(print_html,function(status){
     } else {
         page.evaluate(function(login_user,metadata,log_level) {
             logger.set_level(log_level);
-            restore = L.Restore("map",login_user,metadata);
+            restore = L.Print("map",login_user,metadata);
         },login_user,metadata.map,log_level)
         var checking = setInterval(function(){
             run_time += wait_interval;

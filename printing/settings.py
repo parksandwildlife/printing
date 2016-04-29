@@ -12,6 +12,7 @@ https://docs.djangoproject.com/en/1.9/ref/settings/
 
 import os
 import logging
+import dj_database_url
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -30,10 +31,10 @@ LOG_LEVEL = (os.environ.get('LOG_LEVEL') or 'INFO').upper()
 LOG_LEVEL = getattr(logging,LOG_LEVEL) if LOG_LEVEL in ["DEBUG","INFO","WARNING","ERROR","CRITICAL"] else logging.INFO
 
 
-SSO_COOKIE_DOMAIN= ".dpaw.wa.gov.au"
-SSO_COOKIE_NAME= "oim-uat_dpaw_wa_gov_au_sessionid"
+SSO_COOKIE_DOMAIN= os.environ.get("SSO_COOKIE_DOMAIN") or ".dpaw.wa.gov.au"
+SSO_COOKIE_NAME= os.environ.get("SSO_COOKIE_NAME") or "oim_dpaw_wa_gov_au_sessionid"
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['printing-uat.dpaw.wa.gov.au']
 
 
 # Application definition
@@ -45,6 +46,7 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'dpaw_utils'
 ]
 
 MIDDLEWARE_CLASSES = [
@@ -53,6 +55,7 @@ MIDDLEWARE_CLASSES = [
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
+    'dpaw_utils.middleware.SSOLoginMiddleware',
     'django.contrib.auth.middleware.SessionAuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
@@ -76,6 +79,8 @@ TEMPLATES = [
     },
 ]
 
+DATABASES = {'default': dj_database_url.config()}
+
 WSGI_APPLICATION = 'printing.wsgi.application'
 
 logging.basicConfig(
@@ -83,13 +88,17 @@ logging.basicConfig(
     format = '%(asctime)s %(levelname)s %(message)s',
 )
 
+AUTHENTICATION_BACKENDS = (
+    'django.contrib.auth.backends.ModelBackend',
+    #'ldap_email_auth.auth.EmailBackend'
+)
 
 # Internationalization
 # https://docs.djangoproject.com/en/1.9/topics/i18n/
 
 LANGUAGE_CODE = 'en-us'
 
-TIME_ZONE = 'UTC'
+TIME_ZONE = 'Australia/Perth'
 
 USE_I18N = True
 

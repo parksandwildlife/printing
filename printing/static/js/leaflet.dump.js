@@ -1,15 +1,17 @@
+"use strict"
 L.toJson = function(map) {
-    data = {};
-    data.center = [map.getCenter().lng,map.getCenter().lat];
+    var data = {};
+    data.center = [map.getCenter().lat,map.getCenter().lng];
     var bounds = map.getBounds();
-    data.bounds = [bounds.getSouthWest().lng,bounds.getSouthWest().lat,bounds.getNorthEast().lng,bounds.getNorthEast().lat];
+    data.bounds = [bounds.getSouthWest().lat,bounds.getSouthWest().lng,bounds.getNorthEast().lat,bounds.getNorthEast().lng];
     data.zoom = map.getZoom();
     data.wms_layers = [];
     data.markers = [];
+    data.polylines = [];
     map.eachLayer(function (layer){
-        settings = {}
+        var settings = {}
         if (layer instanceof L.Marker) {
-            settings.point = [layer.getLatLng().lng,layer.getLatLng().lat];
+            settings.point = [layer.getLatLng().lat,layer.getLatLng().lng];
             settings.options = {
                 opacity:layer.options.opacity,
                 icon:layer.options.icon.options,
@@ -25,6 +27,18 @@ L.toJson = function(map) {
             };
             settings.wmsParams = layer.wmsParams;
             data.wms_layers.push(settings);
+        } else if( layer instanceof L.Polyline) {
+            settings.points = []
+            _.each(layer.getLatLngs(), function(point) {
+                settings.points.push([point.lat,point.lng]);
+            })
+            settings.options = layer.options;
+            if (layer.label != null) {
+                settings.label = {};
+                settings.label.label = layer.label._content;
+                settings.label.options = layer.label.options;
+            }
+            data.polylines.push(settings);
         }
     });
 

@@ -54,10 +54,10 @@ var Logger = function () {
      * Return true if msg is not a error msg; otherwise return false
      */
     self.relay = function(msg) {
-        if (msg.startsWith("debug:") || msg.startsWith("info:") || msg.startsWith("warning:")) {
+        if (msg.substr(0,6) == "debug:" || msg.substr(0,5) == "info:" || msg.substr(0,8) == "warning:") {
             console.log(msg);
             return true;
-        } else if (msg.startsWith("error:") || msg.startsWith("critical:")) {
+        } else if (msg.substr(0,6) == "error:" || msg.substr(0,9) == "critical:") {
             console.log(msg);
             return false;
         } else if (msg.toLowerCase().indexOf("error") >= 0) {
