@@ -12,20 +12,72 @@
     <link rel="stylesheet" href="css/leaflet.label.css" />
     <link rel="stylesheet" href="css/L.SimpleGraticule.css" />
     <link rel="stylesheet" href="css/icon.css" />
-    <style>
-        body {
-            padding: 0;
-            margin: 0;
-        }
-        html, body, #map {
-            height: 100%;
-            width: 100%;
-        }
-    </style>
+    <link rel="stylesheet" href="css/sss.print.css" />
 </head>
-    <body>
-        <div id="map"></div>
-    </body>
+<body>
+    <div id="print_container">
+        <div id="content_container"><div id="map"></div></div>
+        <div id="content_header">
+            <table>
+            <tr>
+                <td id="content_header_left">
+                    <div id="map_north_west"/>
+                </td>
+                <td id="content_header_center">
+                </td>
+                <td id="content_header_right">
+                    <div id="map_north_east"/>
+                </td>
+            </tr>
+            </table>
+        </div>
+        <div id="content_footer">
+            <table>
+            <tr>
+                <td id="content_footer_left"> 
+                    <div id="map_south_west"/>
+                </td>
+                <td id="content_footer_center">
+                </td>
+                <td id="content_footer_right">
+                    <div id="map_south_east"/>
+                </td>
+            </tr>
+            </table>
+        </div>
+        <div id="print_footer">
+            <table>
+            <tr>
+                <td id="print_footer_left"> 
+                    <table>
+                    <tr>
+                        <th>Zoom Level:</th>
+                        <td class="key_value_space"/>
+                        <td id="map_zoom_level"></td>
+                    </tr>
+                    </table>
+                </td>
+                <td id="print_footer_center">
+                    <div id="map_scale"/>
+                </td>
+                <td id="print_footer_right">
+                    <table>
+                    <tr>
+                        <th>Creator:</th>
+                        <td class="key_value_space"/>
+                        <td id="map_creator"></td>
+                    </tr>
+                    <tr>
+                        <th>Create Time:</th>
+                        <td class="key_value_space"/>
+                        <td id="map_create_time"></td>
+                    </tr>
+                    </table>
+                </td>
+            </tr>
+            </table>
+        </div>
+    </div>
     <script src="js/logging.js" ></script>
     <script src="https://cdn.jsdelivr.net/underscorejs/1.7.0/underscore-min.js" ></script>
     <script src="https://cdn.jsdelivr.net/jquery/2.1.1/jquery.min.js" ></script>
@@ -41,4 +93,6 @@
     <script src="js/leaflet.label.js" ></script>
     <script src="js/L.SimpleGraticule.js" ></script>
     <script src="js/leaflet.restore.js" ></script>
+    <script src="js/leaflet.print.js" ></script>
+</body>
 </html>

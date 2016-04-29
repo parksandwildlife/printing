@@ -1,2 +1,4 @@
 Django==1.9.5
+dj-database-url
+http://static.dpaw.wa.gov.au/static/py/dpaw-utils/dist/dpaw-utils-0.3a7.tar.gz
 honcho

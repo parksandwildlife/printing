@@ -4,16 +4,15 @@ import tempfile
 import json
 import logging
 import threading
-import pathlib
+import urllib,urlparse
+import traceback
+import sys
 
-try:
-    import StringIO
-except:
-    from io import StringIO
+import StringIO
 import time
 
 from django.conf import settings
-from django.http import HttpResponse,FileResponse
+from django.http import HttpResponse,FileResponse,StreamingHttpResponse
 from django.template import Context, Template
 
 logger = logging.getLogger(__name__)
@@ -26,27 +25,55 @@ print_template = None
 with open(os.path.join(app_dir,"static","js","print.js")) as f:
     print_template = Template(f.read())
 
-def close_temp_file(f):
-    _close = f.close
-    def _close_temp_file():
-        _close()
-        try:
-            os.remove(f.name)
-        except:
-            logger.error("Failed to remove temporary report file '{}'.".format(f.name))
-    
-    return _close_temp_file;
+class TmpFile(object):
+    def __init__(self,f):
+        self._file = f;
 
-class TempFileResponse(FileResponse):
-    def _set_streaming_content(self,value):
-        value.close = close_temp_file(value)
-        super(TempFileResponse,self)._set_streaming_content(value)
+    @property
+    def name(self):
+        return self._file.name
+
+    def read(self,*args,**kwargs):
+        return self._file.read(*args,**kwargs)
+
+    def open(self,*args,**kwargs):
+        return self._file.open(*args,**kwargs)
+
+    def close(self):
+        try:
+            self._file.close()
+        except:
+            pass
+        try:
+            os.remove(self._file.name)
+            logger.info("Succeed to remove the temporary report file '{}'.".format(self._file.name))
+        except Exception as ex:
+            logger.error("Failed to remove temporary report file '{}'.{} ".format(self._file.name,ex))
+    
+class TmpFileResponse(StreamingHttpResponse):
+    """ 
+    A streaming HTTP response class optimized for files.
+    """
+    block_size = 4096
+
+    def __init__(self,streaming_content=(), delete=True, *args, **kwargs):
+        self._delete = delete
+        super(TmpFileResponse, self).__init__(streaming_content,*args, **kwargs)
+
+    def _set_streaming_content(self, value):
+        if self._delete:
+            value = TmpFile(value)
+        filelike = value
+        self._closable_objects.append(filelike)
+        value = iter(lambda: filelike.read(self.block_size), b'')
+        super(TmpFileResponse, self)._set_streaming_content(value)
+
 
 def get_metadata(request):
     if request.META['CONTENT_TYPE'].lower() == "application/json":
-        return request.body.decode("utf-8");
+        return json.loads(request.body.decode("utf-8"));
     else:
-        return json.loads(request.POST["metadata"])
+        return json.loads(request.POST["metadata"]) if "metadata" in request.POST else None
 
 def print_to_png(request,template):
     return _print(request,template,"png",".png","image/png")
@@ -94,33 +121,39 @@ def log_subprocess_stderr(output,error_buff):
 
 
 def _print(request,template,output_format,output_file_ext,content_type):
-    metadata = get_metadata(request)
+    try:
+        metadata = get_metadata(request)
+        if not metadata:
+            return HttpResponse("<html><head/><body><pre>{}</pre></body>".format("Missing report metadata"),status=400)
+    except Exception as ex:
+        return HttpResponse("<html><head/><body><h1>{}</h1><pre>{}</pre></body>".format("Invalid report metadata",ex),status=400)
+        
     output_file = tempfile.mkstemp(suffix=output_file_ext,prefix="{}_".format(template))[1]
     print_js_file = "{}.js".format(output_file)
     sso_cookie = request.COOKIES.get(settings.SSO_COOKIE_NAME,"")
-    print_html = pathlib.Path(os.path.join(app_dir,"static","{}.html".format(template))).as_uri()
+    print_html = urlparse.urljoin('file:',urllib.pathname2url(os.path.join(app_dir,"static","{}.html".format(template))))
     metadata_str = json.dumps(metadata,indent=4)
     context = Context({
         "output_format":output_format,
         "output_file":output_file,
-        "sso_cookie":'1qzhg1by1hs5c4frudmftbq2we8v97j2',
+        "sso_cookie":request.COOKIES.get(settings.SSO_COOKIE_NAME) or "",
         "sso_cookie_name":settings.SSO_COOKIE_NAME,
         "sso_cookie_domain":settings.SSO_COOKIE_DOMAIN,
         "print_html":print_html,
         "metadata" : metadata_str,
-        "login_user":{"name":"rockyc","email":"rocky.chen@dpaw.wa.gov.au"},
+        "login_user":json.dumps(dict([(k,getattr(request.user,k,"")) for k in ["username","first_name","last_name","email"]]),indent=4),
         "timeout":300,
-        "log_level":logger.getEffectiveLevel(),
+        "log_level":settings.LOG_LEVEL,
         "working_directory":working_directory,
         "keep_tmp_file": json.dumps(settings.KEEP_TMP_FILE)
     })
     try:
         with open(print_js_file,'wb') as print_js:
-            print_js.write(bytes(print_template.render(context),'UTF-8'))
+            print_js.write(print_template.render(context))
             print_js.flush()
             print_process = subprocess.Popen(["phantomjs",print_js.name], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
             log_stddout = threading.Thread(target="")
-            error = StringIO()
+            error = StringIO.StringIO()
             try:
                 stdout_thread = threading.Thread(target=log_subprocess_stdout,args=(print_process.stdout,error))
                 stdout_thread.setDaemon(True)
@@ -140,11 +173,7 @@ def _print(request,template,output_format,output_file_ext,content_type):
                     os.remove(output_file)
                     return HttpResponse("<html><head/><body><pre>{}</pre></body>".format(error.getvalue()),status=500)
 
-                if settings.KEEP_TMP_FILE:
-                    response = FileResponse(open(output_file, 'rb'),content_type=content_type)
-                else:
-                    response = TempFileResponse(open(output_file, 'rb'),content_type=content_type)
-                return response;
+                return TmpFileResponse(open(output_file, 'rb'),delete=not settings.KEEP_TMP_FILE,content_type=content_type)
             finally:
                 error.close()
     finally:
