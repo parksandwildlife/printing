@@ -2,7 +2,7 @@
 L.Restore = function(mapid,login_user,data) {
     var self = this;
     var loading = {"init":"loading"};
-    self.finished = false;
+    self.ready_to_print = false;
     self.data = data;
     self.map = null;
     self.mapid = mapid;
@@ -14,7 +14,7 @@ L.Restore = function(mapid,login_user,data) {
         if (_.without(_.values(loading), "load").length === 0) {
             post_restore();
             logger.info("End to restore map stack.");
-            self.finished = true;
+            self.ready_to_print = true;
         }
     };
 
@@ -180,7 +180,7 @@ L.Restore = function(mapid,login_user,data) {
         loading["init"] = "load";
         if (_.without(_.values(loading), "load").length === 0) {
             logger.info("End to restore map stack.");
-            self.finished = true;
+            self.ready_to_print = true;
         }
 
     };

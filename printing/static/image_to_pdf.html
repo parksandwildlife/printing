@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html >
+<head>
+    <title>DPaW printing</title>
+    <meta charset="utf-8" />
+    <script src="js/logging.js" ></script>
+    <script src="js/jquery.min.js" ></script>
+</head>
+<script language="javascript">
+    var print_status = {"ready_to_print":false};
+    var loading_images = [];
+    function print_doc(login_user,metadata,output_files) {
+        for(var k in output_files) {
+            logger.info('Try to load image "' + output_files[k] + '"'); 
+            loading_images.push(k);
+            $("#image").append('<img onload="image_loaded(\'' + k + '\');" id="' + k + '" src="' + output_files[k] + '">');
+        }
+        return print_status;
+    }
+    function image_loaded(img_id) {
+        var index = loading_images.indexOf(img_id);
+        if (index >= 0) {
+            loading_images.splice(index,1);
+        }
+        print_status.ready_to_print = (loading_images.length == 0);
+    }
+</script>
+<body>
+    <div id="image"/>
+</body>
+</html>

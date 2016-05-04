@@ -22,6 +22,7 @@ app_dir = os.path.dirname(os.path.abspath(__file__))
 working_directory = os.path.join(app_dir,"static");
 
 print_template = None
+
 with open(os.path.join(app_dir,"static","js","print.js")) as f:
     print_template = Template(f.read())
 
@@ -129,17 +130,42 @@ def _print(request,template,output_format,output_file_ext,content_type):
         return HttpResponse("<html><head/><body><h1>{}</h1><pre>{}</pre></body>".format("Invalid report metadata",ex),status=400)
         
     output_file = tempfile.mkstemp(suffix=output_file_ext,prefix="{}_".format(template))[1]
-    print_js_file = "{}.js".format(output_file)
+    output_file_basename = output_file[0:len(output_file_ext) * -1]
+    print_js_file = "{}.js".format(output_file_basename)
     sso_cookie = request.COOKIES.get(settings.SSO_COOKIE_NAME,"")
-    print_html = urlparse.urljoin('file:',urllib.pathname2url(os.path.join(app_dir,"static","{}.html".format(template))))
+    print_html = os.path.join(app_dir,"static","{}.html".format(template))
+    outputs = []
+    if not os.path.exists(print_html):
+        print_html = os.path.join(app_dir,"static","{}.image.html".format(template))
+        if output_format == "pdf":
+            outputs.append({
+                "format":"png",
+                "file":"{}.png".format(output_file_basename),
+                "url":urlparse.urljoin('file:',urllib.pathname2url(print_html)),
+                "id":os.path.basename(print_html)
+            })
+            print_html = os.path.join(app_dir,"static","{}.pdf.html".format(template))
+            if not os.path.exists(print_html):
+                print_html = os.path.join(app_dir,"static","image_to_pdf.html")
+            outputs.append({
+                "format":"pdf",
+                "file":"{}.pdf".format(output_file_basename),
+                "url":urlparse.urljoin('file:',urllib.pathname2url(print_html)),
+                "id":os.path.basename(print_html)})
+    if not outputs:
+        outputs.append({
+            "format":output_format,
+            "file":"{}{}".format(output_file_basename,output_file_ext),
+            "url":urlparse.urljoin('file:',urllib.pathname2url(print_html)),
+            "id":os.path.basename(print_html)
+        })
+        
     metadata_str = json.dumps(metadata,indent=4)
     context = Context({
-        "output_format":output_format,
-        "output_file":output_file,
+        "outputs":json.dumps(outputs,indent=4),
         "sso_cookie":request.COOKIES.get(settings.SSO_COOKIE_NAME) or "",
         "sso_cookie_name":settings.SSO_COOKIE_NAME,
         "sso_cookie_domain":settings.SSO_COOKIE_DOMAIN,
-        "print_html":print_html,
         "metadata" : metadata_str,
         "login_user":json.dumps(dict([(k,getattr(request.user,k,"")) for k in ["username","first_name","last_name","email"]]),indent=4),
         "timeout":300,
@@ -170,8 +196,19 @@ def _print(request,template,output_format,output_file_ext,content_type):
 
                 if print_process.returncode != 0:
                     logger.error("Generate print document failed, \nreason={}".format(error.getvalue()))
-                    os.remove(output_file)
+                    for f in outputs:
+                        try:
+                            os.remove(f["file"])
+                        except:
+                            logger.error("Fail to remove temporary file '{}'".format(f["file"]));                           
                     return HttpResponse("<html><head/><body><pre>{}</pre></body>".format(error.getvalue()),status=500)
+
+                if not settings.KEEP_TMP_FILE:
+                    for f in outputs[0:-1]:
+                        try:
+                            os.remove(f["file"])
+                        except:
+                            logger.error("Fail to remove temporary file '{}'".format(f["file"]));                           
 
                 return TmpFileResponse(open(output_file, 'rb'),delete=not settings.KEEP_TMP_FILE,content_type=content_type)
             finally:
