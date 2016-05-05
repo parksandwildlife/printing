@@ -12,12 +12,17 @@
     <link rel="stylesheet" href="css/leaflet.label.css" />
     <link rel="stylesheet" href="css/L.SimpleGraticule.css" />
     <link rel="stylesheet" href="css/icon.css" />
-    <link rel="stylesheet" href="css/sss.print.css" />
+    <link rel="stylesheet" href="css/a3-landscape.css" />
+    <link rel="stylesheet" href="css/sss.css" />
+    <script language="javascript">
+        function print_doc(login_user,metadata,output_files) {
+            return L.Print("map",login_user,metadata);
+        }
+    </script>
 </head>
 <body>
     <div id="print_container">
-        <div id="content_container"><div id="map"></div></div>
-        <div id="content_header">
+        <!-- div id="content_header">
             <table>
             <tr>
                 <td id="content_header_left">
@@ -30,8 +35,9 @@
                 </td>
             </tr>
             </table>
-        </div>
-        <div id="content_footer">
+        </div-->
+        <div id="map"></div>
+        <!-- div id="content_footer">
             <table>
             <tr>
                 <td id="content_footer_left"> 
@@ -44,44 +50,22 @@
                 </td>
             </tr>
             </table>
-        </div>
+        </div-->
         <div id="print_footer">
             <table>
             <tr>
-                <td id="print_footer_left"> 
-                    <table>
-                    <tr>
-                        <th>Zoom Level:</th>
-                        <td class="key_value_space"/>
-                        <td id="map_zoom_level"></td>
-                    </tr>
-                    </table>
-                </td>
-                <td id="print_footer_center">
+                <td/>
+                <td>
                     <div id="map_scale"/>
                 </td>
-                <td id="print_footer_right">
-                    <table>
-                    <tr>
-                        <th>Creator:</th>
-                        <td class="key_value_space"/>
-                        <td id="map_creator"></td>
-                    </tr>
-                    <tr>
-                        <th>Create Time:</th>
-                        <td class="key_value_space"/>
-                        <td id="map_create_time"></td>
-                    </tr>
-                    </table>
-                </td>
+                <td/>
             </tr>
             </table>
         </div>
     </div>
     <script src="js/logging.js" ></script>
-    <script src="https://maps.googleapis.com/maps/api/js?libraries=places&sensor=false"></script>
     <script src="https://cdn.jsdelivr.net/underscorejs/1.7.0/underscore-min.js" ></script>
-    <script src="https://cdn.jsdelivr.net/jquery/2.1.1/jquery.min.js" ></script>
+    <script src="js/jquery.min.js" ></script>
     <script src="https://cdn.jsdelivr.net/ractive/0.6.0/ractive.min.js"></script>
     <script src="https://api.tiles.mapbox.com/mapbox.js/v2.1.4/mapbox.js" ></script>
     <script src="https://cdn.jsdelivr.net/jquery.geocomplete/1.6.4/jquery.geocomplete.min.js" ></script>
@@ -93,6 +77,7 @@
     <script src="js/leaflet.awesome-markers.js" ></script>
     <script src="js/leaflet.label.js" ></script>
     <script src="js/L.SimpleGraticule.js" ></script>
+    <script src="js/page.js" ></script>
     <script src="js/leaflet.restore.js" ></script>
     <script src="js/leaflet.print.js" ></script>
 </body>
