@@ -12,15 +12,15 @@ var quality = 100;
 var log_level = {{log_level}};
 var working_directory = '{{working_directory}}';
 var keep_tmp_file = {{keep_tmp_file}};
-var output_files = {};
-
-var output_index = 0;
-
 
 if (metadata.quality != null) {
     quality = metadata.quality;
 }
 
+
+
+var output_pages = [];
+var output_index = 0;
 phantom.libraryPath = working_directory + "/js"
 
 phantom.addCookie({'name':sso_cookie_name,"value":sso_cookie,"domain":sso_cookie_domain})
@@ -172,3 +172,4 @@ function callback(status) {
 //page.viewportSize = { width: 420, height: 297 };
 logger.info("Try to open url '" + outputs[output_index].url + "'")
 page.open(outputs[output_index].url,callback);
+{% endautoescape %}
