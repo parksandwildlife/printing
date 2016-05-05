@@ -23,7 +23,7 @@ working_directory = os.path.join(app_dir,"static");
 
 print_template = None
 
-with open(os.path.join(app_dir,"static","js","print.js")) as f:
+with open(os.path.join(app_dir,"static","js","print.bootstrap.js")) as f:
     print_template = Template(f.read())
 
 class TmpFile(object):

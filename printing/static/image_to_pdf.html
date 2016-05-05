@@ -3,29 +3,38 @@
 <head>
     <title>DPaW printing</title>
     <meta charset="utf-8" />
-    <script src="js/logging.js" ></script>
-    <script src="js/jquery.min.js" ></script>
+    <style>
+        html {
+            zoom: 0.68; /*workaround for phantomJS2 rendering pages too large*/
+        }
+    </style>
 </head>
-<script language="javascript">
-    var print_status = {"ready_to_print":false};
-    var loading_images = [];
-    function print_doc(login_user,metadata,output_files) {
-        for(var k in output_files) {
-            logger.info('Try to load image "' + output_files[k] + '"'); 
-            loading_images.push(k);
-            $("#image").append('<img onload="image_loaded(\'' + k + '\');" id="' + k + '" src="' + output_files[k] + '">');
-        }
-        return print_status;
-    }
-    function image_loaded(img_id) {
-        var index = loading_images.indexOf(img_id);
-        if (index >= 0) {
-            loading_images.splice(index,1);
-        }
-        print_status.ready_to_print = (loading_images.length == 0);
-    }
-</script>
 <body>
     <div id="image"/>
+
+    <script src="js/jquery.min.js" ></script>
+    <script src="js/logging.js" ></script>
+    <script src="js/page.js" ></script>
+    <script language="javascript">
+        var print_status = {"ready_to_print":false};
+        var loading_pages = [];
+        function print_doc(login_user,metadata,output_pages) {
+            for(var i = 0; i < output_pages.length;i++) {
+                page = output_pages[i];
+                logger.info('Try to load page image "' + page.id + '"'); 
+                loading_pages.push(page.id);
+                $("#image").append('<img onload="page_loaded(\'' + page.id + '\');" id="' + page.id + '" src="' + page.file + '">');
+            }
+            return print_status;
+        }
+        function page_loaded(img_id) {
+            var index = loading_pages.indexOf(img_id);
+            if (index >= 0) {
+                loading_pages.splice(index,1);
+            }
+            print_status.ready_to_print = (loading_pages.length == 0);
+        }
+    </script>
+<body>
 </body>
 </html>

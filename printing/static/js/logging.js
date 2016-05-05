@@ -1,5 +1,5 @@
 "use strict"
-var Logger = function () {
+var logger = new (function () {
     self = this;
     self.DEBUG = 10;
     self.INFO = 20;
@@ -50,27 +50,16 @@ var Logger = function () {
     self.critical = function(msg) {
         console.log("critical:" + msg);
     }
-    /*
-     * Return true if msg is not a error msg; otherwise return false
-     */
     self.relay = function(msg) {
         if (msg.substr(0,6) == "debug:" || msg.substr(0,5) == "info:" || msg.substr(0,8) == "warning:") {
             console.log(msg);
-            return true;
         } else if (msg.substr(0,6) == "error:" || msg.substr(0,9) == "critical:") {
             console.log(msg);
-            return false;
         } else if (msg.toLowerCase().indexOf("error") >= 0) {
             console.log("warning:" +  msg);
-            return true;
         } else {
             console.log("info:" + msg);
-            return true;
         }
     }
     return self;
-};
-var logger = new Logger();
-if ('undefined' !== typeof exports)
-    exports.logger = new Logger();
-
+})();
