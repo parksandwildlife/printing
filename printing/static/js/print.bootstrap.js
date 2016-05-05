@@ -29,13 +29,14 @@ phantom.addCookie({'name':sso_cookie_name,"value":sso_cookie,"domain":sso_cookie
 var webPage = require('webpage');
 var fs = require('fs')
 var page = webPage.create();
-var logging = require(working_directory + '/js/logging');
-
-logging.logger.set_level(log_level);
-
-var ok = phantom.injectJs("jquery.min.js");
+var ok = phantom.injectJs("logging.js");
 if (!ok) {
-    logging.logger.error('Load jquery failed');
+    phantom.exit(1);
+}
+logger.set_level(log_level);
+ok = phantom.injectJs("jquery.min.js");
+if (!ok) {
+    logger.error('Load jquery failed');
     phantom.exit(1);
 }
 
@@ -46,8 +47,7 @@ if (!ok) {
 //page.settings.password="Easondad75";
 
 page.onConsoleMessage = function(msg,lineNum,sourceId) {
-    if (!logging.logger.relay(msg))
-        phantom.exit(1)
+    logger.relay(msg);
 };
 page.onError = function(msg,trace) {
     var msgStack = ['ERROR: ' + msg];
@@ -59,22 +59,22 @@ page.onError = function(msg,trace) {
         });
     }
 
-    logging.logger.error(msgStack.join('\\n'))
+    logger.error(msgStack.join('\\n'))
     phantom.exit(1)
 };
 
 page.onResourceRequested = function(requestData, networkRequest) {
-    logging.logger.debug('Request (#' + requestData.id + '): ' + JSON.stringify(requestData));
+    logger.debug('Request (#' + requestData.id + '): ' + JSON.stringify(requestData));
 };
 page.onResourceError = function(resourceError) {
-    logging.logger.error('Unable to load resource (#' + resourceError.id + 'URL:' + resourceError.url + '). Error code: ' + resourceError.errorCode + '. Description: ' + resourceError.errorString);
+    logger.error('Unable to load resource (#' + resourceError.id + 'URL:' + resourceError.url + '). Error code: ' + resourceError.errorCode + '. Description: ' + resourceError.errorString);
     phantom.exit(1)
 };
 page.onResourceReceived = function(response) {
-    logging.logger.debug('Response (#' + response.id + ', stage "' + response.stage + '"): ' + JSON.stringify(response));
+    logger.debug('Response (#' + response.id + ', stage "' + response.stage + '"): ' + JSON.stringify(response));
 };
 page.onResourceTimeout = function(request) {
-    logging.logger.error('Response timeout (#' + request.id + '): ' + JSON.stringify(request));
+    logger.error('Response timeout (#' + request.id + '): ' + JSON.stringify(request));
     phantom.exit(1)
 };
 
@@ -83,13 +83,13 @@ var wait_interval = 1;
 
 function callback(status) {
     if (status != 'success') {
-        logging.logger.error('Failed to open ' + outputs[output_index].url);
+        logger.error('Failed to open ' + outputs[output_index].url);
         phantom.exit(1);
     } else {
-        page.evaluate(function(login_user,metadata,log_level,output_files) {
+        page.evaluate(function(login_user,metadata,log_level,output_pages) {
             logger.set_level(log_level);
-            print_status = print_doc(login_user,metadata,output_files);
-        },login_user,metadata.map,log_level,output_files)
+            print_status = print_doc(login_user,metadata,output_pages);
+        },login_user,metadata.map,log_level,output_pages)
         var checking = setInterval(function(){
             run_time += wait_interval;
             var ready_to_print = page.evaluate(function() {
@@ -98,50 +98,77 @@ function callback(status) {
             if(ready_to_print) {
                 clearInterval(checking);
                 
-                logging.logger.info('Wait extra 2 seconds for rendering the image');
+                logger.info('Wait extra 2 seconds for rendering the image');
                 setTimeout(function() {
                     if (keep_tmp_file) {
                         fs.write(outputs[output_index].file + ".html",page.content);
                     }
-                    if (outputs[output_index].format == "pdf") {
-                        logging.logger.info('set pagerSize');
-                        page.paperSize = {
-                            width:"420mm",
-                            height:"297mm",
-                            margin: {
-                                top:"0mm",
-                                left:"0mm",
-                                bottom:"0mm",
-                                right:"0mm"
-                            },
-                            /*
-                            footer:{
-                                height:"10mm",
-                                contents:phantom.callback(function(pageNum, numPages) {
-                                    return "<table><tr><th>Creator</th><td>aaa</td><th>Time</th><td></td></table>";
-                                })
-                            },
-                            */
+                    if ((output_index < outputs.length - 1) && (outputs[output_index].format != "pdf")) {
+                        var page_settings = page.evaluate(function() {
+                            return webpage.get_settings();
+                        })
+                        output_pages.push({id:outputs[output_index].id,file:outputs[output_index].file,page_settings:page_settings});
+                        //clear the margin
+                        var page_size = page.evaluate(function(page_settings) {
+                            return webpage.clear_margin(page_settings);
+                        },page_settings)
+                        page.clipRect = {
+                            top:0,
+                            left:0,
+                            width:page_size[0],
+                            height:page_size[1]
+                        };
+                        
+                    }
+
+                    if ((outputs[output_index].format == "pdf") && (output_index == outputs.length - 1)) {
+                        if ((output_index > 0) && ( outputs[output_index].id == "image_to_pdf.html")) {
+                            //get the page size from before steps.
+                            page.paperSize = {
+                                format:output_pages[0].page_settings.printing.paper,
+                                orientation:output_pages[0].page_settings.printing.orientation,
+                                margin: {
+                                    left:output_pages[0].page_settings.printing.margin.left + "mm",
+                                    right:output_pages[0].page_settings.printing.margin.right + "mm",
+                                    top:output_pages[0].page_settings.printing.margin.top + "mm",
+                                    bottom:output_pages[0].page_settings.printing.margin.bottom + "mm",
+                                },
+                                //header: {
+                                //    height:output_pages[0].page_settings.printing.margin.top + "mm",
+                                //    contents: phantom.callback(function(pageNum, numPages) {
+                                //        return "<div/>";
+                                //    })
+                                //},
+                                footer:{
+                                    height:"5mm",
+                                    contents:phantom.callback(function(pageNum, numPages) {
+                                        return "<table ><tr><th align='left' style='padding-right:5px;padding-left:100px'>Creator:</th><td>" + login_user.email + "</td><th align='left' style='padding-right:5px;padding-left:100px'>Time:</th><td>" + new Date().toLocaleString() + "</td></table>";
+                                    })
+                                },
+                            }
+                            page.evaluate(function(page_settings) {
+                                webpage.clear_margin(page_settings);
+                            },output_pages[0].page_settings)
                         }
-                        logging.logger.info(JSON.stringify(page.paperSize));
+                        //logger.info(JSON.stringify(page.paperSize));
                     }
                     page.render(outputs[output_index].file,{format:outputs[output_index].format,quality:quality});
                     if (output_index == outputs.length - 1) {
                         phantom.exit();
                     } else {
-                        output_files[outputs[output_index].id] = outputs[output_index].file;
                         output_index += 1;
+                        logger.info("Try to open url '" + outputs[output_index].url + "'")
                         page.open(outputs[output_index].url,callback);
                     }
                 },2000);
             } else if(run_time > timeout) {
                 clearInterval(checking);
-                logging.logger.error("Timeout.");
+                logger.error("Timeout.");
                 phantom.exit(1);
             }
         },wait_interval * 1000);
     }
 }
 //page.viewportSize = { width: 420, height: 297 };
+logger.info("Try to open url '" + outputs[output_index].url + "'")
 page.open(outputs[output_index].url,callback);
-{% endautoescape %}
